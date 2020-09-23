@@ -1,7 +1,7 @@
 package lesson4
 
 import org.junit.jupiter.api.Tag
-import kotlin.test.Test
+import org.junit.jupiter.api.Test////kotlin.test.Test
 import kotlin.test.assertEquals
 
 // TODO: здесь будут тесты для задач 4-го урока

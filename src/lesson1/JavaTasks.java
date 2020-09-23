@@ -1,6 +1,14 @@
 package lesson1;
 
 import kotlin.NotImplementedError;
+import org.jetbrains.annotations.NotNull;
+
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("unused")
 public class JavaTasks {
@@ -34,10 +42,47 @@ public class JavaTasks {
      *
      * В случае обнаружения неверного формата файла бросить любое исключение.
      */
-    static public void sortTimes(String inputName, String outputName) {
-        throw new NotImplementedError();
-    }
 
+    static public void sortTimes(String inputName, String outputName) throws IOException {
+        String regex = "(0[1-9]|1[0-2]):([0-5]\\d):[0-5]\\d [PA]M";
+        int midDay = 12 * 3600;
+        BufferedReader reader = new BufferedReader(new FileReader(inputName));
+        List<String> text = reader.lines().collect(Collectors.toList());
+        System.out.println(text);
+        int[] times = new int[text.size()];
+        int i = 0;
+        for (String line : text) {
+            if (!Pattern.matches(regex, line)) {
+                throw new IllegalArgumentException();
+            }
+            String[] split = line.split(" ");
+            String[] digits = split[0].split(":");
+            if (digits[0].equals("12"))
+                digits[0] = "00";
+            int fullTime = 0;
+            for (int j = 0; j < 3; j++) {
+                fullTime = fullTime * 60 + Integer.parseInt(digits[j]);
+            }
+            if (split[1].equals("PM")) {
+                fullTime += midDay;
+            }
+            times[i++] = fullTime % (midDay * 2);
+        }
+        text.clear();
+        Sorts.mergeSort(times);
+        BufferedWriter writer = new BufferedWriter(new FileWriter(outputName));
+        for (int time : times) {
+            Integer hours = (time / 3600) % 12;
+            if (hours.equals(0))
+                hours = 12;
+            Integer minutes = time / 60 % 60;
+            Integer seconds = time % 60;
+            String end = (time / midDay == 0) ? "AM" : "PM";
+            writer.write(String.format("%02d:%02d:%02d ", hours, minutes, seconds) + end);
+            writer.newLine();
+        }
+        writer.close();
+    }
     /**
      * Сортировка адресов
      *
@@ -64,8 +109,121 @@ public class JavaTasks {
      *
      * В случае обнаружения неверного формата файла бросить любое исключение.
      */
-    static public void sortAddresses(String inputName, String outputName) {
-        throw new NotImplementedError();
+
+    static class Address implements Comparable {
+
+        public Address(String s, int i) {
+            this.street = s;
+            this.house = i;
+        }
+
+        String street;
+
+        Integer house;
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Address address = (Address) o;
+            return Objects.equals(street, address.street) &&
+                    Objects.equals(house, address.house);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(street, house);
+        }
+
+        @Override
+        public int compareTo(@NotNull Object o) {
+            if (getClass() != o.getClass()) throw new IllegalArgumentException();
+            Address address = (Address) o;
+            return (street.compareTo(address.street) == 0) ? house.compareTo(address.house) : street.compareTo(address.street);
+        }
+
+        @Override
+        public String toString() {
+            return street + " " + house;
+        }
+    }
+
+    static class Human implements Comparable {
+
+        String surname;
+
+        String name;
+
+        public Human(String s, String s1) {
+            surname = s;
+            name = s1;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Human human = (Human) o;
+            return Objects.equals(surname, human.surname) &&
+                    Objects.equals(name, human.name);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(surname, name);
+        }
+
+        @Override
+        public int compareTo(@NotNull Object o) {
+            if (getClass() != o.getClass()) throw new IllegalArgumentException();
+            Human human = (Human) o;
+            return (surname.compareTo(human.surname) == 0) ? name.compareTo(human.name) : surname.compareTo(human.surname);
+        }
+
+        @Override
+        public String toString() {
+            return surname + " " + name;
+        }
+    }
+
+    static public void sortAddresses(String inputName, String outputName) throws IOException {
+        String regex = "[А-ЯЁA-Z][а-яА-ЯёЁ\\w]+ [А-ЯЁA-Z][а-яА-ЯёЁ\\w]+ - [А-ЯЁA-Z][а-яА-ЯёЁ\\w\\-]+ \\d+";
+        InputStreamReader sr = new InputStreamReader(new FileInputStream(inputName), StandardCharsets.UTF_8);
+        BufferedReader reader = new BufferedReader(sr);
+        List<String> text = reader.lines().collect(Collectors.toList());
+        List<Address> keys = new ArrayList<>();
+        Map<Address, List<Human>> addressHumanMap = new HashMap<>();
+        for (String line : text) {
+            Pattern rg = Pattern.compile(regex);
+            Matcher m = rg.matcher(line);
+            if (!Pattern.matches(regex, line))
+                throw new IllegalArgumentException();
+            String[] split = line.split(" ");
+            Address address = new Address(split[3], Integer.parseInt(split[4]));
+            Human human = new Human(split[0], split[1]);
+            if (!addressHumanMap.containsKey(address)) {
+                addressHumanMap.put(address, new ArrayList<>());
+                keys.add(address);
+            }
+            addressHumanMap.get(address).add(human);
+        }
+        keys.sort(Address::compareTo);
+        OutputStreamWriter os = new OutputStreamWriter(new FileOutputStream(outputName), StandardCharsets.UTF_8);
+        BufferedWriter writer = new BufferedWriter(os);
+        for (Address address : keys) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(address.toString());
+            sb.append(" - ");
+            addressHumanMap.get(address).sort(Human::compareTo);
+            for (Human human : addressHumanMap.get(address)) {
+                sb.append(human.toString());
+                sb.append(", ");
+            }
+            String string = sb.toString();
+            writer.write(string.substring(0, string.length() - 2));
+            writer.newLine();
+        }
+        writer.close();
     }
 
     /**
@@ -131,8 +289,50 @@ public class JavaTasks {
      * 2
      * 2
      */
-    static public void sortSequence(String inputName, String outputName) {
-        throw new NotImplementedError();
+    static public void sortSequence(String inputName, String outputName) throws IOException {
+        String regex = "\\d+";
+        Map<Integer, Integer> map = new HashMap<>();
+        BufferedReader reader = new BufferedReader(new FileReader(inputName));
+        List<String> text = reader.lines().collect(Collectors.toList());
+        for (String s : text) {
+            if (!Pattern.matches(regex, s))
+                throw new IllegalArgumentException();
+            //System.out.println(s + "  heeey");
+            Integer num = Integer.parseInt(s);
+            map.merge(num, 1, Integer::sum);
+        }
+        //System.out.println("\n" + map + "\n");
+        Integer maxCount = 0;
+        String res = "";
+        int[] nums = new int[map.size()];
+        int i = 0;
+        for (Integer key : map.keySet()) {
+            nums[i++] = key;
+        }
+        Sorts.mergeSort(nums);
+        for (i = 0; i < nums.length; i++) {
+            if (map.get(nums[i]) > maxCount) {
+                maxCount = map.get(nums[i]);
+                res = String.valueOf(nums[i]);
+            }
+        }
+        int countOfNum = 0;
+        for (i = 0; i < text.size(); i++) {
+            if (text.get(i - countOfNum).equals(res)) {
+                text.remove(i - countOfNum);
+                countOfNum++;
+                text.add(res);
+            }
+        }
+        //System.out.println();
+        OutputStreamWriter os = new OutputStreamWriter(new FileOutputStream(outputName));
+        BufferedWriter writer = new BufferedWriter(os);
+        for (String line : text) {
+            //System.out.println(line + "  juuude");
+            writer.write(line);
+            writer.newLine();
+        }
+        writer.close();
     }
 
     /**

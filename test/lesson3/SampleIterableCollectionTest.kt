@@ -1,7 +1,7 @@
 package lesson3
 
 import org.junit.jupiter.api.Tag
-import kotlin.test.Test
+import org.junit.jupiter.api.Test////kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
