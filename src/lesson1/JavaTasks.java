@@ -47,11 +47,12 @@ public class JavaTasks {
         String regex = "(0[1-9]|1[0-2]):([0-5]\\d):[0-5]\\d [PA]M";
         int midDay = 12 * 3600;
         BufferedReader reader = new BufferedReader(new FileReader(inputName));
-        List<String> text = reader.lines().collect(Collectors.toList());
+        List<String> text = reader.lines().collect(Collectors.toList()); // O(N) - ресурсоемкость
         System.out.println(text);
-        int[] times = new int[text.size()];
+        int[] times = new int[text.size()]; // O(N) - ресурсоемкость
         int i = 0;
         for (String line : text) {
+            // O(N) - ресурсоемкость
             if (!Pattern.matches(regex, line)) {
                 throw new IllegalArgumentException();
             }
@@ -70,8 +71,10 @@ public class JavaTasks {
         }
         text.clear();
         Sorts.mergeSort(times);
+        //O(N*log(N)) - трудоемкость
         BufferedWriter writer = new BufferedWriter(new FileWriter(outputName));
         for (int time : times) {
+            //O(N) - трудоемкость
             Integer hours = (time / 3600) % 12;
             if (hours.equals(0))
                 hours = 12;
@@ -81,7 +84,8 @@ public class JavaTasks {
             writer.write(String.format("%02d:%02d:%02d ", hours, minutes, seconds) + end);
             writer.newLine();
         }
-        writer.close();
+        writer.close(); // O(N) - ресурсоемкость
+        // O(N) + O(N*log(N)) + O(N) = O(N*logN) - трудоемкость
     }
     /**
      * Сортировка адресов
@@ -190,10 +194,12 @@ public class JavaTasks {
         String regex = "[А-ЯЁA-Z][а-яА-ЯёЁ\\w]+ [А-ЯЁA-Z][а-яА-ЯёЁ\\w]+ - [А-ЯЁA-Z][а-яА-ЯёЁ\\w\\-]+ \\d+";
         InputStreamReader sr = new InputStreamReader(new FileInputStream(inputName), StandardCharsets.UTF_8);
         BufferedReader reader = new BufferedReader(sr);
-        List<String> text = reader.lines().collect(Collectors.toList());
-        List<Address> keys = new ArrayList<>();
+        List<String> text = reader.lines().collect(Collectors.toList()); // O(N) - ресурсоемкость
+        List<Address> keys = new ArrayList<>(); // O(N) (в худшем сл.) - ресурсоемкость
         Map<Address, List<Human>> addressHumanMap = new HashMap<>();
+        // O(N) (учитывая вложенные объекты Human) - ресурсоемкость
         for (String line : text) {
+            //O(N) - трудоемкость
             Pattern rg = Pattern.compile(regex);
             Matcher m = rg.matcher(line);
             if (!Pattern.matches(regex, line))
@@ -208,9 +214,11 @@ public class JavaTasks {
             addressHumanMap.get(address).add(human);
         }
         keys.sort(Address::compareTo);
+        //O(N*log(N)) - трудоемкость
         OutputStreamWriter os = new OutputStreamWriter(new FileOutputStream(outputName), StandardCharsets.UTF_8);
         BufferedWriter writer = new BufferedWriter(os);
         for (Address address : keys) {
+            //O(N) с учетом внутр.цикла - трудоемкость
             StringBuilder sb = new StringBuilder();
             sb.append(address.toString());
             sb.append(" - ");
@@ -223,7 +231,8 @@ public class JavaTasks {
             writer.write(string.substring(0, string.length() - 2));
             writer.newLine();
         }
-        writer.close();
+        writer.close(); // O(N) - ресурсоемкость
+        // O(N) + O(N*log(N)) + O(N) = O(N*logN) - трудоемкость
     }
 
     /**
@@ -291,48 +300,54 @@ public class JavaTasks {
      */
     static public void sortSequence(String inputName, String outputName) throws IOException {
         String regex = "\\d+";
-        Map<Integer, Integer> map = new HashMap<>();
         BufferedReader reader = new BufferedReader(new FileReader(inputName));
-        List<String> text = reader.lines().collect(Collectors.toList());
-        for (String s : text) {
+        List<String> text = reader.lines().collect(Collectors.toList()); // O(N) - ресурсоемкость
+        int max = 0; // K = max
+        int[] nums1 = new int[text.size()]; // O(N) - ресурсоемкость
+        for (int i = 0; i < nums1.length; i++) {
+            //O(N) - трудоемкость
+            String s = text.get(i);
             if (!Pattern.matches(regex, s))
                 throw new IllegalArgumentException();
-            //System.out.println(s + "  heeey");
-            Integer num = Integer.parseInt(s);
-            map.merge(num, 1, Integer::sum);
-        }
-        //System.out.println("\n" + map + "\n");
-        Integer maxCount = 0;
-        String res = "";
-        int[] nums = new int[map.size()];
-        int i = 0;
-        for (Integer key : map.keySet()) {
-            nums[i++] = key;
-        }
-        Sorts.mergeSort(nums);
-        for (i = 0; i < nums.length; i++) {
-            if (map.get(nums[i]) > maxCount) {
-                maxCount = map.get(nums[i]);
-                res = String.valueOf(nums[i]);
+            int num = Integer.parseInt(s);
+            nums1[i] = num;
+            if (num > max) {
+                max = num;
             }
         }
+        int[] numsCounts = new int[max]; //O(K) - ресурсоемкость
+        for (int value : nums1) {
+            //O(N) - трудоемкость
+            numsCounts[value - 1]++;
+        }
+        max = 0;
+        int neededNum = 0;
+        for (int i = 0; i < numsCounts.length; i++) {
+            //O(K) - трудоемкость
+            if (numsCounts[i] > max) {
+                max = numsCounts[i];
+                neededNum = i + 1;
+            }
+        }
+        String res = String.valueOf(neededNum);
         int countOfNum = 0;
-        for (i = 0; i < text.size(); i++) {
+        for (int i = 0; i < text.size(); i++) {
+            //O(N) - трудоемкость
             if (text.get(i - countOfNum).equals(res)) {
                 text.remove(i - countOfNum);
                 countOfNum++;
                 text.add(res);
             }
         }
-        //System.out.println();
         OutputStreamWriter os = new OutputStreamWriter(new FileOutputStream(outputName));
         BufferedWriter writer = new BufferedWriter(os);
         for (String line : text) {
-            //System.out.println(line + "  juuude");
+            //O(N) - трудоемкость
             writer.write(line);
             writer.newLine();
         }
-        writer.close();
+        writer.close(); // O(N) + O(K) - ресурсоемкость
+        //O(N) * 4 + O(K) = O(N) + O(K) - трудоемкость
     }
 
     /**
