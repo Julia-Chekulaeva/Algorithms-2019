@@ -300,7 +300,6 @@ public class JavaTasks {
      */
     static public void sortSequence(String inputName, String outputName) throws IOException {
         String regex = "\\d+";
-
         BufferedReader reader = new BufferedReader(new FileReader(inputName));
         List<String> text = reader.lines().collect(Collectors.toList()); // O(N) - ресурсоемкость
         int max = 0; // K = max
